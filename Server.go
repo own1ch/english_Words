@@ -1,15 +1,16 @@
 package main
 
 import (
+	"./ServerCommands"
 	"bufio"
+	"bytes"
+	"encoding/gob"
 	"fmt"
 	"math/rand"
 	"net"
 	"os"
-	"strconv"
 	"strings"
 	"time"
-	"./ServerCommands"
 )
 
 func main() {
@@ -52,17 +53,19 @@ func handleConnection(c net.Conn) {
 		}
 
 		if temp == ServerCommands.GET_WORDS {
-			ServerCommands.Commands(ServerCommands.GET_WORDS)
-		}
+			result := ServerCommands.Commands(ServerCommands.GET_WORDS)
+			binBuf := new(bytes.Buffer)
+			obj := gob.NewEncoder(binBuf)
+			obj.Encode(result)
+			_, errorWrite := c.Write(binBuf.Bytes())
+			if errorWrite != nil {
+				fmt.Println(errorWrite)
+				return
+			}
 
-		result := strconv.Itoa(5) + "\n"
-		_, errorWrite := c.Write([]byte(string(result)))
-		if errorWrite != nil {
-			fmt.Println(errorWrite)
-			return
+			fmt.Println(netData)
+			fmt.Println(result)
 		}
-
-		fmt.Println(netData)
 	}
 	defer c.Close()
 

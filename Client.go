@@ -2,6 +2,8 @@ package main
 
 import (
 	"bufio"
+	"bytes"
+	"encoding/gob"
 	"fmt"
 	"log"
 	"net"
@@ -13,9 +15,16 @@ import (
 //Client.go for tests
 
 const (
-	message = "PING"
+	message       = "PING"
 	StopCharacter = "STOP"
 )
+
+type result struct {
+	id            int
+	word          string
+	transcription string
+	translation   string
+}
 
 func main() {
 	var ip string = "127.0.0.1"
@@ -32,6 +41,7 @@ func Client(ip string, port int) {
 		fmt.Println(err)
 	}
 
+	buff := make([]byte, 1024)
 	for {
 		reader := bufio.NewReader(os.Stdin)
 		sms, _ := reader.ReadString('\n')
@@ -39,10 +49,11 @@ func Client(ip string, port int) {
 			break
 		}
 		con.Write([]byte(sms))
-		log.Printf("sent %s", message)
-
-		buff := make([]byte, 1024)
-		n, _ := con.Read(buff)
-		log.Printf("Receive %s", n)
+		con.Read(buff)
+		bin_buf := bytes.NewBuffer(buff)
+		var answer = new(result)
+		obj := gob.NewDecoder(bin_buf)
+		obj.Decode(answer)
+		log.Println(answer.word)
 	}
 }

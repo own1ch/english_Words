@@ -3,6 +3,7 @@ package ServerCommands
 import (
 	"database/sql"
 	"fmt"
+	_ "github.com/lib/pq"
 )
 
 const (
@@ -10,34 +11,32 @@ const (
 )
 
 type result struct {
-	id int
-	word string
+	id            int
+	word          string
 	transcription string
-	translation string
+	translation   string
 }
 
 const (
-	DB_USER = "test"
+	DB_USER     = "test"
 	DB_PASSWORD = "123"
-	DB_NAME = "postgres"
+	DB_NAME     = "postgres"
 )
 
 func Commands(command string) []result {
 
-	dbinfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable",
-		DB_USER, DB_PASSWORD, DB_NAME)
-	db, errorDb := sql.Open("postgres", dbinfo)
+	connStr := "user=test password=123 dbname=postgres"
+	db, errorDb := sql.Open("postgres", connStr)
 	if errorDb != nil {
-		fmt.Println(nil)
+		panic(errorDb)
 	}
 
 	results := []result{}
 	if command == GET_WORDS {
-		rows, errorSelect := db.Query("SELECT * FROM english_words ORDER BY RANDOM() LIMIT 5")
-
-		if errorSelect != nil {
+		rows, err := db.Query("SELECT * FROM english_words ORDER BY RANDOM() LIMIT 5")
+		if err != nil {
 			//fmt.Println(errorSelect)
-			panic(errorSelect)
+			panic(err)
 		}
 
 		for rows.Next() {
