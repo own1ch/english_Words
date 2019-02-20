@@ -69,7 +69,7 @@ func GetWords(countOfWords string, login string) []string {
 		fmt.Println(r)
 	}
 
-	AddReferences(*db, login, scanId)
+	AddReferences(*db, idUser, scanId)
 
 	defer db.Close()
 	return info

@@ -61,8 +61,7 @@ func handleConnection(c net.Conn) {
 			fmt.Println(netData)
 			fmt.Println(result)
 		} else if strings.Contains(command, "registration") {
-			//netData, errorRead = bufio.NewReader(c).ReadString('\n')
-			netData = "eremin1|a22021980|Виталий"
+			/**example netData = "eremin1|a22021980|Виталий|registration" */
 			reg := ServerCommands.Registration(netData)
 			if reg {
 				_, errorWrite := c.Write([]byte("true"))
@@ -74,9 +73,7 @@ func handleConnection(c net.Conn) {
 				fmt.Printf("Пользователь не зарегистрирован! Что-то пошло не так! Возможно пользователь с таким именем уже существует!%s\n", netData)
 			}
 		} else if strings.Contains(command, "login") {
-			//netData, errorRead = bufio.NewReader(c).ReadString('\n')
-			netData = "eremin|a22021980"
-			CheckErr(errorRead)
+			/**example netData = "eremin|a22021980|login" **/
 			login := ServerCommands.Login(netData)
 			if login {
 				_, errorWrite := c.Write([]byte("true"))
