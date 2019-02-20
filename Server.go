@@ -3,8 +3,6 @@ package main
 import (
 	"./ServerCommands"
 	"bufio"
-	"bytes"
-	"encoding/gob"
 	"fmt"
 	"math/rand"
 	"net"
@@ -19,7 +17,7 @@ func main() {
 		fmt.Println("Please provide a port number!")
 		return
 	}*/
-	PORT := ":8080"
+	PORT := ":6666"
 	l, err := net.Listen("tcp4", PORT)
 	if err != nil {
 		fmt.Println(err)
@@ -47,27 +45,60 @@ func handleConnection(c net.Conn) {
 			return
 		}
 
-		temp := strings.TrimSpace(string(netData))
-		if temp == "STOP" {
-			os.Exit(3)
-		}
-
-		if temp == ServerCommands.GET_WORDS {
-			result := ServerCommands.Commands(ServerCommands.GET_WORDS)
-			binBuf := new(bytes.Buffer)
-			obj := gob.NewEncoder(binBuf)
-			obj.Encode(result)
-			_, errorWrite := c.Write(binBuf.Bytes())
+		var command string
+		command = string(netData[2 : len(netData)-1])
+		if strings.Contains(command, "getWords") {
+			data := strings.Split(command, "|")
+			countOfWords := strings.TrimSpace(string(data[0][len(data[0])-2:]))
+			login := data[1]
+			result := ServerCommands.GetWords(countOfWords, login)
+			words := strings.Join(result, "|") + "\n"
+			_, errorWrite := c.Write([]byte(words))
 			if errorWrite != nil {
 				fmt.Println(errorWrite)
 				return
 			}
-
 			fmt.Println(netData)
 			fmt.Println(result)
+		} else if strings.Contains(command, "registration") {
+			//netData, errorRead = bufio.NewReader(c).ReadString('\n')
+			netData = "eremin1|a22021980|Виталий"
+			reg := ServerCommands.Registration(netData)
+			if reg {
+				_, errorWrite := c.Write([]byte("true"))
+				CheckErr(errorWrite)
+				fmt.Println("Пользователь успешно зарегистрирован!")
+			} else {
+				_, errorWrite := c.Write([]byte("false"))
+				CheckErr(errorWrite)
+				fmt.Printf("Пользователь не зарегистрирован! Что-то пошло не так! Возможно пользователь с таким именем уже существует!%s\n", netData)
+			}
+		} else if strings.Contains(command, "login") {
+			//netData, errorRead = bufio.NewReader(c).ReadString('\n')
+			netData = "eremin|a22021980"
+			CheckErr(errorRead)
+			login := ServerCommands.Login(netData)
+			if login {
+				_, errorWrite := c.Write([]byte("true"))
+				CheckErr(errorWrite)
+				fmt.Println("Пользователь успешно залогинился!")
+			} else {
+				_, errorWrite := c.Write([]byte("false"))
+				CheckErr(errorWrite)
+				fmt.Println("Пользователь не смог залогиниться!")
+			}
+		} else if command == "STOP" {
+			os.Exit(3)
 		}
+
 	}
 	defer c.Close()
 
 	fmt.Println("server closed")
+}
+
+func CheckErr(err error) {
+	if err != nil {
+		panic(err)
+	}
 }

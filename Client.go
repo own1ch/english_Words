@@ -1,6 +1,7 @@
 package main
 
 import (
+	"./ServerCommands"
 	"bufio"
 	"bytes"
 	"encoding/gob"
@@ -18,13 +19,6 @@ const (
 	message       = "PING"
 	StopCharacter = "STOP"
 )
-
-type result struct {
-	id            int
-	word          string
-	transcription string
-	translation   string
-}
 
 func main() {
 	var ip string = "127.0.0.1"
@@ -49,11 +43,17 @@ func Client(ip string, port int) {
 			break
 		}
 		con.Write([]byte(sms))
-		con.Read(buff)
+		_, e := con.Read(buff)
+		if e != nil {
+			fmt.Println(e)
+		}
+		answer := ServerCommands.GetStruct()
 		bin_buf := bytes.NewBuffer(buff)
-		var answer = new(result)
 		obj := gob.NewDecoder(bin_buf)
-		obj.Decode(answer)
-		log.Println(answer.word)
+		e = obj.Decode(&answer)
+		if e != nil {
+			fmt.Println(e)
+		}
+		log.Println(answer[0].Word)
 	}
 }
