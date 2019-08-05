@@ -1,11 +1,13 @@
 package serverCommand
 
 import (
+	"../logs"
 	"../struct"
 	"database/sql"
 	"fmt"
 	_ "github.com/lib/pq"
 	"strconv"
+	"time"
 )
 
 const (
@@ -35,15 +37,15 @@ func GetWords(countOfWords string, login string) []_struct.English {
 	for idUserQuery.Next() {
 		err := idUserQuery.Scan(&userId, &userTable)
 		if err != nil {
-			panic(err)
+			logs.UpdateFile(time.Now().Format("15:04:23") + err.Error())
 		}
 	}
 
 	var tab string
 	if userTable {
-		tab = "id > 18174"
+		tab = "id < 18145"
 	} else {
-		tab = "id < 18175"
+		tab = "id > 18144"
 	}
 
 	rows, err := db.Query(
@@ -51,14 +53,14 @@ func GetWords(countOfWords string, login string) []_struct.English {
 			"FULL OUTER JOIN english_words ew on wu.word_id = ew.id "+
 			"WHERE wu.user_id = $1 and ew.id IS NULL OR wu.word_id IS NULL and "+tab+" ORDER BY RANDOM() LIMIT $2", userId, countOfWords)
 	if err != nil {
-		panic(err)
+		logs.UpdateFile(time.Now().Format("15:04:23") + err.Error())
 	}
 
 	for rows.Next() {
 		r := _struct.English{}
 		err := rows.Scan(&r.Word, &r.Transcription, &r.Translate, &r.ID)
 		if err != nil {
-			fmt.Println(err)
+			logs.UpdateFile(time.Now().Format("15:04:23") + err.Error())
 			continue
 		}
 		example := parseHtml(r.Word)
@@ -89,7 +91,7 @@ func addReferences(db sql.DB, userId int, scanId []int, tab string) {
 	for _, wordId := range scanId {
 		_, err := db.Exec("INSERT INTO word_user(word_id, user_id) VALUES ($1, $2)", wordId, userId)
 		if err != nil {
-			fmt.Println("Запись в базу не удалась!")
+			logs.UpdateFile(time.Now().Format("15:04:23") + err.Error())
 		}
 	}
 }
@@ -100,7 +102,7 @@ func Registration(login string, password string, name string) _struct.BoolAnswer
 	_, err := db.Exec("INSERT INTO users(login, password, name) VALUES ($1, $2, $3)",
 		login, password, name)
 	if err != nil {
-		fmt.Println(err)
+		logs.UpdateFile(time.Now().Format("15:04:23") + err.Error())
 		regAns.BoolAnswer = false
 		return regAns
 	} else {
@@ -115,7 +117,7 @@ func Login(login string, password string) _struct.BoolAnswer {
 	rows, err := db.Query("SELECT login FROM users WHERE login=$1 AND password=$2",
 		login, password)
 	if err != nil {
-		panic(err)
+		logs.UpdateFile(time.Now().Format("15:04:23") + err.Error())
 	}
 	if rows.Next() {
 		logAns.BoolAnswer = true
@@ -134,7 +136,7 @@ func ChangeTable(login string, password string) _struct.BoolAnswer {
 	if rows.Next() {
 		err = rows.Scan(&tableType.BoolAnswer)
 		if err != nil {
-			fmt.Println(err)
+			logs.UpdateFile(time.Now().Format("15:04:23") + err.Error())
 			tableType.BoolAnswer = false
 			return tableType
 		}
@@ -142,7 +144,7 @@ func ChangeTable(login string, password string) _struct.BoolAnswer {
 			_, err = db.Exec("UPDATE users SET table_type = false WHERE login=$1 AND password=$2",
 				login, password)
 			if err != nil {
-				fmt.Println(err)
+				logs.UpdateFile(time.Now().Format("15:04:23") + err.Error())
 				tableType.BoolAnswer = true
 				return tableType
 			}
@@ -150,7 +152,7 @@ func ChangeTable(login string, password string) _struct.BoolAnswer {
 			_, err = db.Exec("UPDATE users SET table_type = true WHERE login=$1 AND password=$2",
 				login, password)
 			if err != nil {
-				fmt.Println(err)
+				logs.UpdateFile(time.Now().Format("15:04:23") + err.Error())
 				tableType.BoolAnswer = true
 				return tableType
 			}
